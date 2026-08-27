@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, ApiError } from './api/client'
 import { ComposeModal } from './components/ComposeModal'
 import { LoginPage } from './components/LoginPage'
@@ -6,7 +6,7 @@ import { MessageList } from './components/MessageList'
 import { ReadingPane } from './components/ReadingPane'
 import { Sidebar } from './components/Sidebar'
 import { useAuth } from './context/AuthContext'
-import type { Folder, MessageDetail, MessageSummary } from './types'
+import type { AttachmentMeta, Folder, MessageDetail, MessageSummary } from './types'
 
 function Mailbox() {
   const { email, logout } = useAuth()
@@ -22,6 +22,11 @@ function Mailbox() {
   const [detailError, setDetailError] = useState<string | null>(null)
 
   const [compose, setCompose] = useState<{ to?: string; subject?: string } | null>(null)
+
+  const unreadCount = useMemo(
+    () => (folder === 'INBOX' ? messages.filter((m) => !m.seen).length : 0),
+    [folder, messages],
+  )
 
   const loadMessages = useCallback(async (targetFolder: Folder) => {
     setListLoading(true)
@@ -57,9 +62,13 @@ function Mailbox() {
     }
   }
 
-  async function handleSend(to: string, subject: string, body: string) {
-    await api.sendMessage(to, subject, body)
+  async function handleSend(to: string, subject: string, body: string, files: File[]) {
+    await api.sendMessage(to, subject, body, files)
     if (folder === 'Sent') loadMessages('Sent')
+  }
+
+  async function handleDownloadAttachment(uid: string, attachmentFolder: Folder, attachment: AttachmentMeta) {
+    await api.downloadAttachment(uid, attachmentFolder, attachment.index, attachment.filename)
   }
 
   return (
@@ -70,10 +79,12 @@ function Mailbox() {
         onCompose={() => setCompose({})}
         email={email}
         onLogout={logout}
+        unreadCount={unreadCount}
       />
 
       <section className="flex w-96 shrink-0 flex-col border-r border-border bg-surface">
         <MessageList
+          folder={folder}
           messages={messages}
           selectedUid={selectedUid}
           onSelect={handleSelect}
@@ -85,11 +96,13 @@ function Mailbox() {
       <main className="min-w-0 flex-1 bg-surface">
         <ReadingPane
           message={selectedMessage}
+          folder={folder}
           loading={detailLoading}
           error={detailError}
           onReply={(to, subject) =>
             setCompose({ to, subject: subject.startsWith('Re: ') ? subject : `Re: ${subject}` })
           }
+          onDownloadAttachment={handleDownloadAttachment}
         />
       </main>
 

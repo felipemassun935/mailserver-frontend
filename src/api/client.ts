@@ -28,23 +28,30 @@ export function clearSession() {
   sessionStorage.removeItem(EMAIL_KEY)
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+function authHeaders(): Headers {
+  const headers = new Headers()
   const session = getStoredSession()
-  const headers = new Headers(options.headers)
-  headers.set('Content-Type', 'application/json')
   if (session) headers.set('Authorization', `Bearer ${session.token}`)
+  return headers
+}
 
-  const res = await fetch(`/api${path}`, { ...options, headers })
-
+async function assertOk(res: Response): Promise<void> {
   if (res.status === 401) {
     clearSession()
     throw new ApiError(401, 'Sesión expirada')
   }
-
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new ApiError(res.status, body.detail ?? 'Error inesperado')
   }
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = authHeaders()
+  headers.set('Content-Type', 'application/json')
+
+  const res = await fetch(`/api${path}`, { ...options, headers })
+  await assertOk(res)
 
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
@@ -65,9 +72,30 @@ export const api = {
   getMessage: (uid: string, folder: Folder) =>
     request<MessageDetail>(`/messages/${encodeURIComponent(uid)}?folder=${encodeURIComponent(folder)}`),
 
-  sendMessage: (to: string, subject: string, body: string) =>
-    request<void>('/messages/send', {
-      method: 'POST',
-      body: JSON.stringify({ to, subject, body }),
-    }),
+  sendMessage: async (to: string, subject: string, body: string, files: File[] = []) => {
+    const form = new FormData()
+    form.append('to', to)
+    form.append('subject', subject)
+    form.append('body', body)
+    for (const file of files) form.append('files', file)
+
+    const res = await fetch('/api/messages/send', { method: 'POST', headers: authHeaders(), body: form })
+    await assertOk(res)
+  },
+
+  downloadAttachment: async (uid: string, folder: Folder, index: number, filename: string) => {
+    const res = await fetch(
+      `/api/messages/${encodeURIComponent(uid)}/attachments/${index}?folder=${encodeURIComponent(folder)}`,
+      { headers: authHeaders() },
+    )
+    await assertOk(res)
+
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+  },
 }

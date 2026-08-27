@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from 'react'
 import type { Folder } from '../types'
-import { IconCompose, IconInbox, IconSent } from './icons'
+import { IconCompose, IconInbox, IconMail, IconSent } from './icons'
 
 interface SidebarProps {
   folder: Folder
@@ -8,6 +8,7 @@ interface SidebarProps {
   onCompose: () => void
   email: string | null
   onLogout: () => void
+  unreadCount: number
 }
 
 const FOLDERS: { id: Folder; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
@@ -15,14 +16,14 @@ const FOLDERS: { id: Folder; label: string; icon: ComponentType<SVGProps<SVGSVGE
   { id: 'Sent', label: 'Enviados', icon: IconSent },
 ]
 
-export function Sidebar({ folder, onFolderChange, onCompose, email, onLogout }: SidebarProps) {
+export function Sidebar({ folder, onFolderChange, onCompose, email, onLogout, unreadCount }: SidebarProps) {
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-surface px-3 py-4">
-      <div className="mb-4 flex items-center gap-2 px-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-sm font-semibold text-white">
-          @
+      <div className="mb-4 flex items-center gap-2.5 px-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white">
+          <IconMail className="h-4 w-4" aria-hidden />
         </div>
-        <span className="text-sm font-semibold text-text">Correo</span>
+        <span className="text-[15px] font-semibold tracking-tight text-text">Correo</span>
       </div>
 
       <button
@@ -47,13 +48,22 @@ export function Sidebar({ folder, onFolderChange, onCompose, email, onLogout }: 
             }`}
           >
             <f.icon className="h-4 w-4" aria-hidden />
-            {f.label}
+            <span className="flex-1 text-left">{f.label}</span>
+            {f.id === 'INBOX' && unreadCount > 0 && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${
+                  folder === f.id ? 'bg-white/70 text-accent-hover' : 'bg-surface-hover text-text-muted'
+                }`}
+              >
+                {unreadCount}
+              </span>
+            )}
           </button>
         ))}
       </nav>
 
       <div className="mt-auto space-y-2 border-t border-border pt-3">
-        <p className="truncate px-2 font-mono text-xs text-text-muted" title={email ?? ''}>
+        <p className="truncate px-2 text-xs text-text-muted" title={email ?? ''}>
           {email}
         </p>
         <button

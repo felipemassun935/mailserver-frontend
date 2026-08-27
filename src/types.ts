@@ -6,6 +6,13 @@ export interface MessageSummary {
   seen: boolean
 }
 
+export interface AttachmentMeta {
+  index: number
+  filename: string
+  content_type: string
+  size: number
+}
+
 export interface MessageDetail {
   uid: string
   sender: string
@@ -14,6 +21,7 @@ export interface MessageDetail {
   date: string
   body_text: string
   body_html: string | null
+  attachments: AttachmentMeta[]
 }
 
 export type Folder = 'INBOX' | 'Sent'
