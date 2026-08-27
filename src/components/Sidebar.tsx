@@ -1,6 +1,6 @@
 import type { ComponentType, SVGProps } from 'react'
 import type { FolderKey } from '../types'
-import { IconCompose, IconInbox, IconMail, IconSent } from './icons'
+import { IconCompose, IconInbox, IconSent } from './icons'
 
 interface SidebarProps {
   folder: FolderKey
@@ -29,9 +29,7 @@ export function Sidebar({
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-surface px-3 py-4">
       <div className="mb-4 flex items-center gap-2.5 px-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-white">
-          <IconMail className="h-4 w-4" aria-hidden />
-        </div>
+        <img src="/logo.png" alt="" className="h-8 w-8" aria-hidden />
         <span className="text-[15px] font-semibold tracking-tight text-text">Correo</span>
       </div>
 

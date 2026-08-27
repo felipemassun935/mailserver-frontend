@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { IconMail } from './icons'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -27,9 +26,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm animate-[rise_0.4s_var(--ease-spring)]">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-white shadow-sm shadow-accent/30">
-            <IconMail className="h-5 w-5" aria-hidden />
-          </div>
+          <img src="/logo.png" alt="" className="mx-auto mb-4 h-14 w-14" aria-hidden />
           <h1 className="text-xl font-semibold tracking-tight text-text">Correo</h1>
           <p className="mt-1 text-sm text-text-muted">homelab.local</p>
         </div>
