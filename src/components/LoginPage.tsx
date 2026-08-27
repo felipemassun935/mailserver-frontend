@@ -26,7 +26,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm animate-[rise_0.4s_var(--ease-spring)]">
         <div className="mb-8 text-center">
-          <img src="/logo.png" alt="" className="mx-auto mb-4 h-14 w-14" aria-hidden />
+          <img src="/logo.png" alt="" className="mx-auto mb-4 h-24 w-24" aria-hidden />
           <h1 className="text-xl font-semibold tracking-tight text-text">Correo</h1>
           <p className="mt-1 text-sm text-text-muted">homelab.local</p>
         </div>

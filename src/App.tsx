@@ -91,7 +91,13 @@ function Mailbox() {
 
   async function handleSend(to: string, subject: string, body: string, files: File[]) {
     await api.sendMessage(to, subject, body, files)
-    if (folderKey === 'SENT' && folderPaths.sent) loadMessages(folderPaths.sent)
+
+    // El backend crea la carpeta de Enviados la primera vez que hace falta,
+    // así que re-resolvemos las carpetas por si "sent" pasó de null a un
+    // nombre real (sin esto, "Enviados" seguiría deshabilitado hasta recargar).
+    const paths = await api.getFolders().catch(() => folderPaths)
+    setFolderPaths(paths)
+    if (folderKey === 'SENT' && paths.sent) loadMessages(paths.sent)
   }
 
   async function handleDownloadAttachment(uid: string, folder: string, attachment: AttachmentMeta) {
