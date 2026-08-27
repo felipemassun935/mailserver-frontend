@@ -1,16 +1,17 @@
 import DOMPurify from 'dompurify'
 import { useState } from 'react'
-import type { AttachmentMeta, Folder, MessageDetail } from '../types'
+import type { AttachmentMeta, MessageDetail } from '../types'
 import { avatarColor, formatFileSize, formatFullDate, initials, senderEmail, senderName } from '../utils'
 import { IconDownload, IconFile, IconMail, IconReply } from './icons'
 
 interface ReadingPaneProps {
   message: MessageDetail | null
-  folder: Folder
+  /** Nombre real del mailbox IMAP donde vive el mensaje abierto. */
+  folder: string
   loading: boolean
   error: string | null
   onReply: (to: string, subject: string) => void
-  onDownloadAttachment: (uid: string, folder: Folder, attachment: AttachmentMeta) => Promise<void>
+  onDownloadAttachment: (uid: string, folder: string, attachment: AttachmentMeta) => Promise<void>
 }
 
 function AttachmentChip({

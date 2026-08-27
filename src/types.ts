@@ -24,4 +24,13 @@ export interface MessageDetail {
   attachments: AttachmentMeta[]
 }
 
-export type Folder = 'INBOX' | 'Sent'
+/** Identificador de UI para la carpeta seleccionada (no es necesariamente
+ * el nombre real del mailbox IMAP, ver FolderPaths). */
+export type FolderKey = 'INBOX' | 'SENT'
+
+/** Nombres reales de los mailboxes IMAP en este servidor, resueltos por el
+ * backend vía LIST (no siempre son literalmente "INBOX"/"Sent"). */
+export interface FolderPaths {
+  inbox: string
+  sent: string | null
+}

@@ -6,12 +6,20 @@ import { MessageList } from './components/MessageList'
 import { ReadingPane } from './components/ReadingPane'
 import { Sidebar } from './components/Sidebar'
 import { useAuth } from './context/AuthContext'
-import type { AttachmentMeta, Folder, MessageDetail, MessageSummary } from './types'
+import type { AttachmentMeta, FolderKey, FolderPaths, MessageDetail, MessageSummary } from './types'
+
+const SENT_NOT_FOUND = 'No se encontró la carpeta de enviados en este servidor'
 
 function Mailbox() {
   const { email, logout } = useAuth()
 
-  const [folder, setFolder] = useState<Folder>('INBOX')
+  // "INBOX" es un nombre estándar de IMAP, casi siempre correcto de entrada.
+  // El nombre real de "enviados" varía por servidor, así que arranca en null
+  // hasta resolverlo contra el backend (ver useEffect de abajo).
+  const [folderPaths, setFolderPaths] = useState<FolderPaths>({ inbox: 'INBOX', sent: null })
+  const [folderKey, setFolderKey] = useState<FolderKey>('INBOX')
+  const currentPath = folderKey === 'INBOX' ? folderPaths.inbox : folderPaths.sent
+
   const [messages, setMessages] = useState<MessageSummary[]>([])
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState<string | null>(null)
@@ -24,17 +32,27 @@ function Mailbox() {
   const [compose, setCompose] = useState<{ to?: string; subject?: string } | null>(null)
 
   const unreadCount = useMemo(
-    () => (folder === 'INBOX' ? messages.filter((m) => !m.seen).length : 0),
-    [folder, messages],
+    () => (folderKey === 'INBOX' ? messages.filter((m) => !m.seen).length : 0),
+    [folderKey, messages],
   )
 
-  const loadMessages = useCallback(async (targetFolder: Folder) => {
+  useEffect(() => {
+    api
+      .getFolders()
+      .then(setFolderPaths)
+      .catch(() => {
+        // Si falla la resolución, seguimos con INBOX (asunción segura) y
+        // "enviados" queda deshabilitado en vez de romper con un 400.
+      })
+  }, [])
+
+  const loadMessages = useCallback(async (path: string) => {
     setListLoading(true)
     setListError(null)
     setSelectedUid(null)
     setSelectedMessage(null)
     try {
-      const data = await api.listMessages(targetFolder)
+      const data = await api.listMessages(path)
       setMessages(data)
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : 'Error de conexión')
@@ -44,15 +62,24 @@ function Mailbox() {
   }, [])
 
   useEffect(() => {
-    loadMessages(folder)
-  }, [folder, loadMessages])
+    if (currentPath) {
+      loadMessages(currentPath)
+    } else if (folderKey === 'SENT') {
+      setMessages([])
+      setSelectedUid(null)
+      setSelectedMessage(null)
+      setListLoading(false)
+      setListError(SENT_NOT_FOUND)
+    }
+  }, [folderKey, currentPath, loadMessages])
 
   async function handleSelect(uid: string) {
+    if (!currentPath) return
     setSelectedUid(uid)
     setDetailLoading(true)
     setDetailError(null)
     try {
-      const detail = await api.getMessage(uid, folder)
+      const detail = await api.getMessage(uid, currentPath)
       setSelectedMessage(detail)
       setMessages((prev) => prev.map((m) => (m.uid === uid ? { ...m, seen: true } : m)))
     } catch (err) {
@@ -64,27 +91,28 @@ function Mailbox() {
 
   async function handleSend(to: string, subject: string, body: string, files: File[]) {
     await api.sendMessage(to, subject, body, files)
-    if (folder === 'Sent') loadMessages('Sent')
+    if (folderKey === 'SENT' && folderPaths.sent) loadMessages(folderPaths.sent)
   }
 
-  async function handleDownloadAttachment(uid: string, attachmentFolder: Folder, attachment: AttachmentMeta) {
-    await api.downloadAttachment(uid, attachmentFolder, attachment.index, attachment.filename)
+  async function handleDownloadAttachment(uid: string, folder: string, attachment: AttachmentMeta) {
+    await api.downloadAttachment(uid, folder, attachment.index, attachment.filename)
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
       <Sidebar
-        folder={folder}
-        onFolderChange={setFolder}
+        folder={folderKey}
+        onFolderChange={setFolderKey}
         onCompose={() => setCompose({})}
         email={email}
         onLogout={logout}
         unreadCount={unreadCount}
+        sentAvailable={folderPaths.sent !== null}
       />
 
       <section className="flex w-96 shrink-0 flex-col border-r border-border bg-surface">
         <MessageList
-          folder={folder}
+          folder={folderKey}
           messages={messages}
           selectedUid={selectedUid}
           onSelect={handleSelect}
@@ -96,7 +124,7 @@ function Mailbox() {
       <main className="min-w-0 flex-1 bg-surface">
         <ReadingPane
           message={selectedMessage}
-          folder={folder}
+          folder={currentPath ?? ''}
           loading={detailLoading}
           error={detailError}
           onReply={(to, subject) =>

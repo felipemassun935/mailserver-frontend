@@ -1,4 +1,4 @@
-import type { Folder, MessageDetail, MessageSummary } from '../types'
+import type { FolderPaths, MessageDetail, MessageSummary } from '../types'
 
 const TOKEN_KEY = 'webmail_token'
 const EMAIL_KEY = 'webmail_email'
@@ -66,10 +66,12 @@ export const api = {
 
   logout: () => request<void>('/auth/logout', { method: 'POST' }),
 
-  listMessages: (folder: Folder, limit = 50) =>
+  getFolders: () => request<FolderPaths>('/folders'),
+
+  listMessages: (folder: string, limit = 50) =>
     request<MessageSummary[]>(`/messages?folder=${encodeURIComponent(folder)}&limit=${limit}`),
 
-  getMessage: (uid: string, folder: Folder) =>
+  getMessage: (uid: string, folder: string) =>
     request<MessageDetail>(`/messages/${encodeURIComponent(uid)}?folder=${encodeURIComponent(folder)}`),
 
   sendMessage: async (to: string, subject: string, body: string, files: File[] = []) => {
@@ -83,7 +85,7 @@ export const api = {
     await assertOk(res)
   },
 
-  downloadAttachment: async (uid: string, folder: Folder, index: number, filename: string) => {
+  downloadAttachment: async (uid: string, folder: string, index: number, filename: string) => {
     const res = await fetch(
       `/api/messages/${encodeURIComponent(uid)}/attachments/${index}?folder=${encodeURIComponent(folder)}`,
       { headers: authHeaders() },

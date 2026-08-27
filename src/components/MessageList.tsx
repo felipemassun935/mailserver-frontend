@@ -1,8 +1,8 @@
-import type { Folder, MessageSummary } from '../types'
+import type { FolderKey, MessageSummary } from '../types'
 import { avatarColor, formatShortDate, initials, senderName } from '../utils'
 
 interface MessageListProps {
-  folder: Folder
+  folder: FolderKey
   messages: MessageSummary[]
   selectedUid: string | null
   onSelect: (uid: string) => void
@@ -10,9 +10,9 @@ interface MessageListProps {
   error: string | null
 }
 
-const FOLDER_LABEL: Record<Folder, string> = {
+const FOLDER_LABEL: Record<FolderKey, string> = {
   INBOX: 'Recibidos',
-  Sent: 'Enviados',
+  SENT: 'Enviados',
 }
 
 export function MessageList({ folder, messages, selectedUid, onSelect, loading, error }: MessageListProps) {
