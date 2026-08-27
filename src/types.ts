@@ -33,4 +33,6 @@ export type FolderKey = 'INBOX' | 'SENT'
 export interface FolderPaths {
   inbox: string
   sent: string | null
+  /** Todos los mailboxes IMAP del servidor, para diagnóstico. */
+  all: string[]
 }

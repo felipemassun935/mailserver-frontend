@@ -16,7 +16,7 @@ function Mailbox() {
   // "INBOX" es un nombre estándar de IMAP, casi siempre correcto de entrada.
   // El nombre real de "enviados" varía por servidor, así que arranca en null
   // hasta resolverlo contra el backend (ver useEffect de abajo).
-  const [folderPaths, setFolderPaths] = useState<FolderPaths>({ inbox: 'INBOX', sent: null })
+  const [folderPaths, setFolderPaths] = useState<FolderPaths>({ inbox: 'INBOX', sent: null, all: [] })
   const [folderKey, setFolderKey] = useState<FolderKey>('INBOX')
   const currentPath = folderKey === 'INBOX' ? folderPaths.inbox : folderPaths.sent
 
